@@ -1,1 +1,181 @@
-f
+pip install schedule plyer
+
+import time
+import threading
+import re
+import tkinter as tk
+from tkinter import messagebox
+import schedule
+from plyer import notification
+
+# 持ち物リストの設定（名称、重要度: High, Medium, Low）
+ITEMS = [
+    {"name": "財布・鍵", "priority": "High", "done": False},
+    {"name": "スマートフォン", "priority": "High", "done": False},
+    {"name": "折りたたみ傘", "priority": "Medium", "done": False},
+    {"name": "ハンカチ・ティッシュ", "priority": "Low", "done": False},
+]
+
+# 重要度に応じた通知設定 (間隔: 秒, 最大回数)
+PRIORITY_SETTINGS = {
+    "High": {"interval": 10, "max_repeat": 5},   # テスト用に10秒間隔/5回リピート
+    "Medium": {"interval": 20, "max_repeat": 3}, # テスト用に20秒間隔/3回リピート
+    "Low": {"interval": 0, "max_repeat": 1},     # 1回のみ
+}
+
+class ScheduledItemCheckApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("動的時刻設定付き 持ち物チェッカー")
+        self.root.geometry("450x480")
+        
+        self.check_vars = []
+        self.is_running = False
+        self.scheduled_time = "07:30"  # 初期設定時刻
+        
+        tk.Label(root, text="【本日の持ち物リスト】", font=("Helvetica", 14, "bold")).pack(pady=10)
+        
+        # 持ち物リストのチェックボックス生成
+        for idx, item in enumerate(ITEMS):
+            var = tk.BooleanVar(value=item["done"])
+            self.check_vars.append(var)
+            
+            frame = tk.Frame(root)
+            frame.pack(fill="x", padx=20, pady=4)
+            
+            cb = tk.Checkbutton(
+                frame, 
+                text=f"{item['name']} (重要度: {item['priority']})", 
+                variable=var, 
+                command=lambda i=idx: self.toggle_item(i),
+                font=("Helvetica", 11)
+            )
+            cb.pack(side="left")
+
+        # --- 時刻設定エリア ---
+        time_frame = tk.LabelFrame(root, text=" 毎朝の通知時刻設定 ", font=("Helvetica", 10, "bold"), padx=10, pady=10)
+        time_frame.pack(fill="x", padx=20, pady=15)
+
+        tk.Label(time_frame, text="通知時刻 (HH:MM):", font=("Helvetica", 10)).pack(side="left", padx=5)
+        
+        self.time_entry = tk.Entry(time_frame, width=8, font=("Helvetica", 11))
+        self.time_entry.insert(0, self.scheduled_time)
+        self.time_entry.pack(side="left", padx=5)
+
+        set_btn = tk.Button(
+            time_frame, 
+            text="時刻を設定", 
+            command=self.update_schedule_time,
+            bg="#2196F3", 
+            fg="white", 
+            font=("Helvetica", 9, "bold")
+        )
+        set_btn.pack(side="left", padx=5)
+
+        # ステータス表示ラベル
+        self.status_label = tk.Label(
+            root, 
+            text=f"スケジュール待機中（毎朝 {self.scheduled_time} に自動起動）", 
+            fg="gray", 
+            font=("Helvetica", 10)
+        )
+        self.status_label.pack(pady=5)
+
+        # 手動開始ボタン
+        self.start_btn = tk.Button(
+            root, 
+            text="今すぐリマインドを開始する", 
+            command=self.start_reminders, 
+            bg="#4CAF50", 
+            fg="white", 
+            font=("Helvetica", 11, "bold")
+        )
+        self.start_btn.pack(pady=10)
+
+        # 初期スケジュールの登録とバックグラウンド監視スレッド開始
+        self.register_schedule(self.scheduled_time)
+        threading.Thread(target=self.run_scheduler, daemon=True).start()
+
+    def register_schedule(self, time_str):
+        """スケジュールの登録・更新"""
+        schedule.clear()  # 既存のスケジュールをクリア
+        schedule.every().day.at(time_str).do(self.trigger_scheduled_reminder)
+
+    def update_schedule_time(self):
+        """入力フォームから時刻を取得してスケジュールを再設定"""
+        input_time = self.time_entry.get().strip()
+        
+        # HH:MM のフォーマットチェック (00:00 〜 23:59)
+        if not re.match(r"^([01][0-9]|2[0-3]):[0-5][0-9]$", input_time):
+            messagebox.showerror("入力エラー", "時刻は 'HH:MM' 形式で入力してください。\n(例: 07:30, 18:05)")
+            return
+            
+        self.scheduled_time = input_time
+        self.register_schedule(self.scheduled_time)
+        self.status_label.config(
+            text=f"スケジュール待機中（毎朝 {self.scheduled_time} に自動起動）", 
+            fg="gray"
+        )
+        messagebox.showinfo("設定完了", f"通知時刻を【{self.scheduled_time}】に更新しました。")
+
+    def toggle_item(self, index):
+        ITEMS[index]["done"] = self.check_vars[index].get()
+
+    def run_scheduler(self):
+        """バックグラウンドで時刻を監視するループ"""
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    def trigger_scheduled_reminder(self):
+        """指定時刻になったらメインスレッド経由で起動"""
+        # 日付が変わった時のためにチェック状態をリセット
+        for idx, item in enumerate(ITEMS):
+            item["done"] = False
+            self.check_vars[idx].set(False)
+            
+        self.start_reminders()
+
+    def start_reminders(self):
+        if self.is_running:
+            return
+            
+        self.is_running = True
+        self.start_btn.config(state="disabled")
+        self.status_label.config(text="リマインド監視中...", fg="red")
+        
+        # 各アイテムの通知処理を並列実行
+        for item in ITEMS:
+            threading.Thread(target=self.reminder_loop, args=(item,), daemon=True).start()
+
+    def reminder_loop(self, item):
+        setting = PRIORITY_SETTINGS[item["priority"]]
+        count = 0
+        
+        while count < setting["max_repeat"]:
+            if item["done"]:
+                break
+                
+            notification.notify(
+                title=f"【持ち物確認】{item['name']}",
+                message=f"重要度: {item['priority']} - 準備が完了していません！",
+                app_name="持ち物チェッカー",
+                timeout=5
+            )
+            
+            count += 1
+            if item["done"] or count >= setting["max_repeat"]:
+                break
+                
+            time.sleep(setting["interval"])
+            
+        self.root.after(0, lambda: self.status_label.config(
+            text=f"本日のリマインド完了 / 次回 {self.scheduled_time}", fg="blue"
+        ))
+        self.root.after(0, lambda: self.start_btn.config(state="normal"))
+        self.is_running = False
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ScheduledItemCheckApp(root)
+    root.mainloop()
