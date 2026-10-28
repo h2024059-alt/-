@@ -1,1 +1,24 @@
+categorys={
+    'a':['1','2','3'],
+    'b':['4','5','6'],
+    'c':['7','8','9']
+}
 
+def add_item(category,item):
+    have_category=0
+    have_item=0
+    for i in categorys:
+        if category==i:
+            have_category=1
+            for j in categorys[i]:
+                if j==item:
+                    have_item=1
+            if have_item==0:
+                categorys[i].append(item)
+    if have_category==0:
+        print('指定されたカテゴリーがありません')
+    if have_item==1:
+        print('指定されたアイテムはすでにあります')
+    print(categorys)
+
+add_item('a','b')
