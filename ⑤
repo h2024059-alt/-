@@ -5,7 +5,7 @@ categorys={
 }
 #categorysは現在仮の値が入っています
 
-def add_item(category,item):
+def add_item(category,item):    #categoryにitemを追加します　　すでに同じ名前のものがあればprintします
     have_category=0
     have_item=0
     for i in categorys:
@@ -21,7 +21,7 @@ def add_item(category,item):
     if have_item==1:
         print('指定されたアイテムはすでにあります')
 
-def delete_item(category,item):
+def delete_item(category,item):    #categoryのitemを削除します　　同じ名前のものがなければprintします
     have_category=0
     have_item=0
     for i in categorys:
@@ -36,7 +36,7 @@ def delete_item(category,item):
     if have_item==0:
         print('指定されたアイテムはありません')
 
-def delete_item(category):
+def add_category(category):    #categoryを追加します　　同じ名前のものがあればprintします
     have_category=0
     have_item=0
     for i in categorys:
@@ -46,4 +46,16 @@ def delete_item(category):
         print('そのカテゴリー名はすでに存在します')
     else:
         categorys[category]=[]
+    print(categorys)
+
+def delete_category(category):    #categoryを削除します　　同じ名前のものがなければprintします
+    have_category=0
+    have_item=0
+    for i in categorys:
+        if category==i:
+            have_category=1
+    if have_category==0:
+        print('そのカテゴリー名はありません')
+    else:
+        del categorys[category]
     print(categorys)
