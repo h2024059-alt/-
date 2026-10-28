@@ -36,4 +36,14 @@ def delete_item(category,item):
     if have_item==0:
         print('指定されたアイテムはありません')
 
-delete_item('a','3')
+def delete_item(category):
+    have_category=0
+    have_item=0
+    for i in categorys:
+        if category==i:
+            have_category=1
+    if have_category==1:
+        print('そのカテゴリー名はすでに存在します')
+    else:
+        categorys[category]=[]
+    print(categorys)
