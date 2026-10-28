@@ -35,6 +35,5 @@ def delete_item(category,item):
         print('指定されたカテゴリーがありません')
     if have_item==0:
         print('指定されたアイテムはありません')
-    print(categorys)
 
 delete_item('a','3')
