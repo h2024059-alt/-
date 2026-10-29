@@ -1,1 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>持ち物チェック＆重要度リマインダー</title>
+  <style>
+    :root {
+      --bg-color: #1a1a24;
+      --card-bg: #2b2b36;
+      --input-bg: #1f1f2e;
+      --border-color: #44445c;
+      --text-color: #f0f0f5;
+      --text-muted: #a0a0b0;
+      --primary: #2b8a3e;
+      --danger: #d9480f;
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    h3 {
+      margin: 20px 0 10px 0;
+      font-size: 1.2rem;
+    }
+
+    .form-container {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #5c7cfa;
+    }
+
+    .btn-add {
+      background-color: #2b8a3e;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background-color: #2b9e43;
+    }
+
+    .item-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-left: 4px solid #5c7cfa;
+    }
+
+    .item-card.checked {
+      opacity: 0.5;
+      border-left-color: #888;
+    }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-grow: 1;
+    }
+
+    .item-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .item-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .item-card.checked .item-title {
+      text-decoration: line-through;
+    }
+
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 11px;
+      color: white;
+    }
+
+    .badge-1 {
+      background-color: #2b8a3e;
+    }
+
+    .badge-2 {
+      background-color: #1971c2;
+    }
+
+    .badge-3 {
+      background-color: #e67e22;
+    }
+
+    .badge-4 {
+      background-color: #d9480f;
+    }
+
+    .badge-5 {
+      background-color: #c92a2a;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .btn-del {
+      background-color: #c92a2a;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-del:hover {
+      background-color: #e03131;
+    }
+
+    .empty-msg {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎒 持ち物チェック＆重要度リマインダー</h2>
+
+  <div class="form-container">
+    <div class="form-group">
+      <label for="txtName">持ち物名:</label>
+      <input type="text" id="txtName" placeholder="例: 財布、パスポート">
+    </div>
+
+    <div class="form-group">
+      <label for="ddImportance">重要度:</label>
+      <select id="ddImportance">
+        <option value="1">★1 (低 - 直前1回)</option>
+        <option value="2">★2 (やや低 - 10分前/直前)</option>
+        <option value="3" selected>★3 (中 - 15分/5分前/直前)</option>
+        <option value="4">★4 (高 - 30/15/5分前/直前)</option>
+        <option value="5">★5 (超重要 - 60/30/15/5/1分前/直前)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="txtMinutes">出発予定(分後):</label>
+      <input type="number" id="txtMinutes" value="30" min="1" max="1440">
+    </div>
+
+    <button class="btn-add" id="btnAdd">＋ 追加する</button>
+  </div>
+
+  <h3>📋 持ち物一覧</h3>
+  <div id="outList"></div>
+
+  <script>
+    // データ保存用のキー
+    const STORAGE_KEY = 'packing_items_data';
+    
+    // 持ち物データリスト
+    let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // 通知の許可リクエスト
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function renderList() {
+      const container = document.getElementById('outList');
+      container.innerHTML = '';
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="empty-msg">持ち物が登録されていません。</div>';
+        return;
+      }
+
+      const now = new Date();
+      const triggerCounts = {
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 7
+      };
+
+      items.forEach((item, index) => {
+        const departureDt = new Date(item.departure_time);
+        const diffMin = Math.floor((departureDt - now) / (1000 * 60));
+        
+        let statusText = "";
+        if (item.checked) {
+          statusText = "✅ 完了";
+        } else if (diffMin > 0) {
+          statusText = `あと ${diffMin} 分`;
+        } else {
+          statusText = "🚨 出発時刻！";
+        }
+
+        const count = triggerCounts[item.importance];
+        const starStr = "★".repeat(item.importance);
+
+        const card = document.createElement('div');
+        card.className = `item-card ${item.checked ? 'checked' : ''}`;
+
+        card.innerHTML = `
+          <div class="item-left">
+            <input type="checkbox" class="item-checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${index}, this.checked)">
+            <div class="item-info">
+              <div class="item-title">${escapeHtml(item.name)}</div>
+              <div class="item-meta">
+                <span class="badge badge-${item.importance}">${starStr}</span>
+                <span>通知設定: <b>${count}回</b></span>
+                <span>| 状態: <b>${statusText}</b></span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-del" onclick="deleteItem(${index})">削除</button>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function addItem() {
+      const nameInput = document.getElementById('txtName');
+      const importanceInput = document.getElementById('ddImportance');
+      const minutesInput = document.getElementById('txtMinutes');
+
+      const name = nameInput.value.trim();
+      if (!name) {
+        return;
+      }
+
+      const minutes = parseInt(minutesInput.value, 10) || 30;
+      const departureDt = new Date(Date.now() + minutes * 60000);
+
+      items.push({
+        name: name,
+        importance: parseInt(importanceInput.value, 10),
+        departure_time: departureDt.toISOString(),
+        checked: false
+      });
+
+      saveData();
+      nameInput.value = "";
+      renderList();
+    }
+
+    function toggleCheck(index, checked) {
+      items[index].checked = checked;
+      saveData();
+      renderList();
+    }
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      saveData();
+      renderList();
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, function(m) {
+        const escapeMap = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return escapeMap[m];
+      });
+    }
+
+    // イベントリスナーの設定
+    document.getElementById('btnAdd').addEventListener('click', addItem);
+
+    // 定期的な再描画（1分ごとの残り時間更新）
+    setInterval(renderList, 60000);
+
+    // 初回描画
+    renderList();
+  </script>
+</body>
+</html>
