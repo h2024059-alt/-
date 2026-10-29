@@ -74,4 +74,3 @@ def all_items(type,use_item):    #typeはcompare、getの二種類　compareはu
         return(0)
     if type=='get':
         return(got_items)
-print(all_items('compare','4'))
