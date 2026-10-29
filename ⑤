@@ -59,3 +59,19 @@ def delete_category(category):    #categoryを削除します　　同じ名前�
     else:
         del categorys[category]
     print(categorys)
+
+def all_items(type,use_item):    #typeはcompare、getの二種類　compareはuse_itemと同じものがすべてのリストの中に１つでもあれば1を、なければ0を返す　getはすべての物をリストで返す
+    if type=='get':
+        got_items=[]
+    for category in categorys:
+        for item in categorys[category]:
+            if type=='compare':
+                if use_item == item:
+                    return(1)
+            if type=='get':
+                got_items.append(item)
+    if type=='compare':
+        return(0)
+    if type=='get':
+        return(got_items)
+print(all_items('compare','4'))
