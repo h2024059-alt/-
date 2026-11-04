@@ -5,7 +5,6 @@ categorys={
     '機械類':['iPad','PC','イヤホン','ヘッドホン','モバイルバッテリー'],
     '日用品':['筆記用具','ティッシュ','ハンカチ','エコバック']
 }
-#categorysは現在仮の値が入っています
 
 def add_item(category,item):    #categoryにitemを追加します　　すでに同じ名前のものがあればprintします
     have_category=0
