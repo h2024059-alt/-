@@ -1,8 +1,8 @@
 categorys={
     '重要なもの':['スマホ','財布','鍵','定期券、交通系IC'],
     '提出物等':['宿題','提出書類'],
-    '身に着けるもの':['時計','眼鏡','衣類','傘']
-    '機械類':['iPad','PC','イヤホン','ヘッドホン','モバイルバッテリー']
+    '身に着けるもの':['時計','眼鏡','衣類','傘'],
+    '機械類':['iPad','PC','イヤホン','ヘッドホン','モバイルバッテリー'],
     '日用品':['筆記用具','ティッシュ','ハンカチ','エコバック']
 }
 #categorysは現在仮の値が入っています
@@ -48,7 +48,6 @@ def add_category(category):    #categoryを追加します　　同じ名前の�
         print('そのカテゴリー名はすでに存在します')
     else:
         categorys[category]=[]
-    print(categorys)
 
 def delete_category(category):    #categoryを削除します　　同じ名前のものがなければprintします
     have_category=0
@@ -60,7 +59,6 @@ def delete_category(category):    #categoryを削除します　　同じ名前�
         print('そのカテゴリー名はありません')
     else:
         del categorys[category]
-    print(categorys)
 
 def all_items(type,use_item):    #typeはcompare、getの二種類　compareはuse_itemと同じものがすべてのリストの中に１つでもあれば1を、なければ0を返す　getはすべての物をリストで返す
     if type=='get':
